@@ -1,4 +1,4 @@
-# robo2t
+# bongo
 This is a prototype of a program to navigate through mongo resources (databases, collections, etc.)
 and run commands to it. Basically, it's almost a k9s version for mongo databases.
 
