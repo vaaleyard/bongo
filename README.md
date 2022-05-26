@@ -10,3 +10,9 @@ and run commands to it. Basically, it's almost a k9s version for mongo databases
 and navigate through them.
 - Make a preview when viewing those items above
 - Make an input field to run commands against the mongo connection, i.g. `db.getUsers()`
+
+## Contributing
+See [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+## License
+[MIT](./LICENSE)
