@@ -10,10 +10,16 @@ pub enum InputMode {
     Insert,
 }
 
+pub enum Focus {
+    DatabaseBlock,
+    InputBlock,
+}
+
 pub struct App {
     pub input: String,
     pub input_mode: InputMode,
     pub messages: Vec<String>,
+    pub focus: Option<Focus>,
 }
 
 impl Default for App {
@@ -22,6 +28,7 @@ impl Default for App {
             input: String::new(),
             input_mode: InputMode::Normal,
             messages: Vec::new(),
+            focus: None,
         }
     }
 }
@@ -35,9 +42,16 @@ pub fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Resu
                 InputMode::Normal => match key.code {
                     KeyCode::Char('i') => {
                         app.input_mode = InputMode::Insert;
+                        app.focus = Some(Focus::InputBlock);
                     }
-                    KeyCode::Char('q') | KeyCode::Esc => {
+                    KeyCode::Char('d') => {
+                        app.focus = Some(Focus::DatabaseBlock);
+                    }
+                    KeyCode::Char('q') => {
                         return Ok(());
+                    }
+                    KeyCode::Esc => {
+                        app.focus = None;
                     }
                     _ => {}
                 },
@@ -53,6 +67,7 @@ pub fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Resu
                     }
                     KeyCode::Esc => {
                         app.input_mode = InputMode::Normal;
+                        app.focus = None;
                     }
                     _ => {}
                 },

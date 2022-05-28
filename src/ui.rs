@@ -8,7 +8,7 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
-use crate::app::{App, InputMode};
+use crate::app::{App, Focus, InputMode};
 
 pub fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
     let chunks = Layout::default()
@@ -23,7 +23,7 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
             .direction(Direction::Horizontal)
             .split(chunks[1]);
 
-        draw_database_tree(f, chunks[0]);
+        draw_database_tree(f, app, chunks[0]);
         draw_preview(f, app, chunks[1]);
     }
 }
@@ -32,7 +32,8 @@ fn draw_input<B: Backend>(f: &mut Frame<B>, app: &App, area: Rect) {
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .title(Span::styled("Input", Style::default().fg(Color::Gray)));
+        .title(Span::raw("Input"));
+    // .title(Span::styled("Input", Style::default().fg(Color::Gray)));
 
     let (input_normal_mode_message, input_normal_mode_style) = (
         vec![
@@ -74,7 +75,7 @@ fn draw_input<B: Backend>(f: &mut Frame<B>, app: &App, area: Rect) {
     }
 }
 
-fn draw_database_tree<B: Backend>(f: &mut Frame<B>, area: Rect) {
+fn draw_database_tree<B: Backend>(f: &mut Frame<B>, app: &App, area: Rect) {
     let chunks = Layout::default()
         .constraints([Constraint::Percentage(100)])
         .direction(Direction::Vertical)
@@ -99,9 +100,13 @@ fn draw_database_tree<B: Backend>(f: &mut Frame<B>, area: Rect) {
                     .borders(Borders::ALL)
                     .border_type(BorderType::Rounded),
             )
-            .style(Style::default().fg(Color::White))
+            .style(match app.focus {
+                Some(Focus::DatabaseBlock) => Style::default().fg(Color::Cyan),
+                _ => Style::default().fg(Color::White),
+            })
             .highlight_style(Style::default().add_modifier(Modifier::ITALIC))
-            .highlight_symbol("> ");
+            .highlight_symbol(">");
+
         f.render_widget(databases, chunks[0]);
     }
 }
