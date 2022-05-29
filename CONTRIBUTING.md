@@ -3,7 +3,13 @@ All contributions are welcome and I will be extremely grateful if you make it.
 Since this project is in it's very early stages, there are a lot of things you can contribute with. You can start out by reading the project [page](https://github.com/users/vaaleyard/projects/1/views/1). Go through all the items and choose one of them to contribute.
 
 ## Running
-Cargo basic commands can execute this project: `cargo run`
+First, you will need a running mongo database. I've made a docker-compose to make our life easier:
+```
+cd src/mongo
+docker compose up -d
+export MONGODB_URI='mongodb://admin:bergo@localhost:27017/'
+```
+Then, you can execute the project with cargo basic commands: `cargo run`
 
 ## Pull Requests
 1. Fork the project.
