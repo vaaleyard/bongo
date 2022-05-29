@@ -1,4 +1,5 @@
 mod app;
+mod mongo;
 mod ui;
 
 use app::{run_app, App};
@@ -7,6 +8,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+
 use std::io;
 use tui::{backend::CrosstermBackend, Terminal};
 

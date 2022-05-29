@@ -8,7 +8,10 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
-use crate::app::{App, Focus, InputMode};
+use crate::{
+    app::{App, Focus, InputMode},
+    mongo::get_dbs,
+};
 
 pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let chunks = Layout::default()
@@ -87,11 +90,15 @@ fn draw_database_tree<B: Backend>(f: &mut Frame<B>, app: &mut App, area: Rect) {
             .direction(Direction::Vertical)
             .split(chunks[0]);
 
-        let items = [
-            ListItem::new(" admin"),
-            ListItem::new(" config"),
-            ListItem::new(" local"),
-        ];
+        // TODO: recover this error (it's a mongodb::error::Error)
+        let items = get_dbs()
+            .map(|dbs| {
+                dbs.iter()
+                    .map(String::from)
+                    .map(ListItem::new)
+                    .collect::<Vec<_>>()
+            })
+            .unwrap();
         app.database_tree_size = Some(items.len());
 
         let databases = List::new(items)
@@ -107,7 +114,7 @@ fn draw_database_tree<B: Backend>(f: &mut Frame<B>, app: &mut App, area: Rect) {
                 _ => Style::default().fg(Color::White),
             })
             .highlight_style(Style::default().add_modifier(Modifier::ITALIC))
-            .highlight_symbol(">");
+            .highlight_symbol(" ");
 
         let mut state = ListState::default();
         state.select(app.database_selected);
