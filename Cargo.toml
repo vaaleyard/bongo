@@ -9,3 +9,7 @@ edition = "2021"
 tui = "0.18"
 crossterm = "0.23"
 unicode-width = "0.1.4"
+
+[dependencies.mongodb]
+version = "2.2.0"
+features = ["tokio-sync"]
