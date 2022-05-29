@@ -3,14 +3,14 @@ use tui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans, Text},
-    widgets::{Block, BorderType, Borders, List, ListItem, Paragraph},
+    widgets::{Block, BorderType, Borders, List, ListItem, ListState, Paragraph},
     Frame,
 };
 use unicode_width::UnicodeWidthStr;
 
 use crate::app::{App, Focus, InputMode};
 
-pub fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
+pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let chunks = Layout::default()
         .margin(1)
         .constraints([Constraint::Length(3), Constraint::Min(0)].as_ref())
@@ -75,7 +75,7 @@ fn draw_input<B: Backend>(f: &mut Frame<B>, app: &App, area: Rect) {
     }
 }
 
-fn draw_database_tree<B: Backend>(f: &mut Frame<B>, app: &App, area: Rect) {
+fn draw_database_tree<B: Backend>(f: &mut Frame<B>, app: &mut App, area: Rect) {
     let chunks = Layout::default()
         .constraints([Constraint::Percentage(100)])
         .direction(Direction::Vertical)
@@ -92,6 +92,8 @@ fn draw_database_tree<B: Backend>(f: &mut Frame<B>, app: &App, area: Rect) {
             ListItem::new("> config"),
             ListItem::new("> local"),
         ];
+        app.database_tree_size = Some(items.len());
+
         let databases = List::new(items)
             .block(
                 Block::default()
@@ -107,7 +109,9 @@ fn draw_database_tree<B: Backend>(f: &mut Frame<B>, app: &App, area: Rect) {
             .highlight_style(Style::default().add_modifier(Modifier::ITALIC))
             .highlight_symbol(">");
 
-        f.render_widget(databases, chunks[0]);
+        let mut state = ListState::default();
+        state.select(app.database_selected);
+        f.render_stateful_widget(databases, chunks[0], &mut state);
     }
 }
 

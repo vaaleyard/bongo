@@ -20,6 +20,8 @@ pub struct App {
     pub input_mode: InputMode,
     pub messages: Vec<String>,
     pub focus: Option<Focus>,
+    pub database_selected: Option<usize>,
+    pub database_tree_size: Option<usize>,
 }
 
 impl Default for App {
@@ -29,13 +31,15 @@ impl Default for App {
             input_mode: InputMode::Normal,
             messages: Vec::new(),
             focus: None,
+            database_selected: Some(0),
+            database_tree_size: Some(0),
         }
     }
 }
 
 pub fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<()> {
     loop {
-        terminal.draw(|f| ui(f, &app))?;
+        terminal.draw(|f| ui(f, &mut app))?;
 
         if let Event::Key(key) = event::read()? {
             match app.input_mode {
@@ -53,6 +57,34 @@ pub fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Resu
                     KeyCode::Esc => {
                         app.focus = None;
                     }
+                    KeyCode::Char('j') => match app.focus {
+                        Some(Focus::DatabaseBlock) => {
+                            // I confess it's weird, but it seems to be working
+                            if app.database_tree_size
+                                > usize::checked_add(
+                                    app.database_selected.unwrap(),
+                                    usize::try_from(1).unwrap(),
+                                )
+                            {
+                                app.database_selected = usize::checked_add(
+                                    app.database_selected.unwrap(),
+                                    usize::try_from(1).unwrap(),
+                                );
+                            }
+                        }
+                        _ => {}
+                    },
+                    KeyCode::Char('k') => match app.focus {
+                        Some(Focus::DatabaseBlock) => {
+                            if app.database_selected != Some(0) {
+                                app.database_selected = usize::checked_sub(
+                                    app.database_selected.unwrap(),
+                                    usize::try_from(1).unwrap(),
+                                );
+                            }
+                        }
+                        _ => {}
+                    },
                     _ => {}
                 },
                 InputMode::Insert => match key.code {
