@@ -88,9 +88,9 @@ fn draw_database_tree<B: Backend>(f: &mut Frame<B>, app: &mut App, area: Rect) {
             .split(chunks[0]);
 
         let items = [
-            ListItem::new("> admin"),
-            ListItem::new("> config"),
-            ListItem::new("> local"),
+            ListItem::new(" admin"),
+            ListItem::new(" config"),
+            ListItem::new(" local"),
         ];
         app.database_tree_size = Some(items.len());
 
