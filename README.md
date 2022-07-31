@@ -1,8 +1,10 @@
-# bongo
-This is a prototype of a program to navigate through mongo resources (databases, collections, etc.)
-and run commands to it. Basically, it's almost a k9s version for mongo databases.
+
 
 <div align="center">
+<h1> bongo </h1>
+A mongo management TUI dashboard <br>
+
+<br>
 
 ![lines of code](https://sloc.xyz/github/vaaleyard/bongo) ![Code Size](https://img.shields.io/github/languages/code-size/vaaleyard/bongo) ![help wanted](https://img.shields.io/github/labels/vaaleyard/bongo/help%20wanted) ![good first issue](https://img.shields.io/github/labels/vaaleyard/bongo/good%20first%20issue) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
