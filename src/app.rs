@@ -1,9 +1,15 @@
 use std::io;
 
+use linked_hash_map::LinkedHashMap;
+
 use crossterm::event::{self, Event, KeyCode};
 use tui::{backend::Backend, Terminal};
 
-use crate::ui::ui;
+use crate::{
+    mongo::{get_collections_from_db, get_database_names, get_users_from_db, get_views_from_db},
+    tree::Database,
+    ui::ui,
+};
 
 pub enum InputMode {
     Normal,
@@ -22,6 +28,7 @@ pub struct App {
     pub focus: Option<Focus>,
     pub database_selected: Option<usize>,
     pub database_tree_size: Option<usize>,
+    pub database_tree: LinkedHashMap<String, Database>,
 }
 
 impl Default for App {
@@ -33,11 +40,49 @@ impl Default for App {
             focus: None,
             database_selected: Some(0),
             database_tree_size: Some(0),
+            database_tree: LinkedHashMap::new(),
         }
     }
 }
 
+impl App {
+    // TODO: return a Result
+    pub fn populate_hashmap(&mut self) {
+        get_database_names().unwrap().iter().for_each(|database| {
+            let mut database_object = Database::default();
+
+            get_collections_from_db(database.to_string())
+                .unwrap()
+                .iter()
+                .for_each(|collection| {
+                    database_object.new_collection(collection.to_string());
+                });
+
+            get_views_from_db(database.to_string())
+                .unwrap()
+                .iter()
+                .for_each(|view| {
+                    database_object.new_view(view.to_string());
+                });
+
+            get_users_from_db(database.to_string())
+                .unwrap()
+                .iter()
+                .for_each(|user| {
+                    database_object.new_user(user.to_string());
+                });
+
+            self.database_tree
+                .entry(database.to_string())
+                .or_insert(database_object);
+        });
+    }
+}
+
 pub fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<()> {
+    // populate database names in hashmap
+    app.populate_hashmap();
+
     loop {
         terminal.draw(|f| ui(f, &mut app))?;
 

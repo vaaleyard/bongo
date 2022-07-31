@@ -1,5 +1,6 @@
 mod app;
 mod mongo;
+mod tree;
 mod ui;
 
 use app::{run_app, App};

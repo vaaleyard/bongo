@@ -8,10 +8,7 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
-use crate::{
-    app::{App, Focus, InputMode},
-    mongo::get_dbs,
-};
+use crate::app::{App, Focus, InputMode};
 
 pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let chunks = Layout::default()
@@ -90,15 +87,38 @@ fn draw_database_tree<B: Backend>(f: &mut Frame<B>, app: &mut App, area: Rect) {
             .direction(Direction::Vertical)
             .split(chunks[0]);
 
-        // TODO: recover this error (it's a mongodb::error::Error)
-        let items = get_dbs()
-            .map(|dbs| {
-                dbs.iter()
-                    .map(String::from)
-                    .map(ListItem::new)
-                    .collect::<Vec<_>>()
-            })
-            .unwrap();
+        let mut items = Vec::new();
+        for (database_name, database) in &app.database_tree {
+            items.push(ListItem::new(Span::raw(format!(
+                "> {}",
+                database_name.to_owned()
+            ))));
+
+            items.push(ListItem::new("  > Collections"));
+            for collection_name in &database.collections {
+                items.push(ListItem::new(Span::raw(format!(
+                    "     {}",
+                    collection_name.collection.to_owned()
+                ))));
+            }
+
+            items.push(ListItem::new("  > Views"));
+            for view_name in &database.views {
+                items.push(ListItem::new(Span::raw(format!(
+                    "     {}",
+                    view_name.view.to_owned()
+                ))));
+            }
+
+            items.push(ListItem::new("  > Users"));
+            for user in &database.users {
+                items.push(ListItem::new(Span::raw(format!(
+                    "     {}",
+                    user.user.to_owned()
+                ))));
+            }
+        }
+
         app.database_tree_size = Some(items.len());
 
         let databases = List::new(items)
