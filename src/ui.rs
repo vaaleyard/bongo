@@ -86,33 +86,40 @@ fn draw_database_tree<B: Backend>(f: &mut Frame<B>, app: &mut App, area: Rect) {
 
         let mut items = Vec::new();
         for (database_name, database) in &app.database_tree {
+            app.is_menu.push(true);
             items.push(ListItem::new(Span::raw(format!(
                 "> {}",
                 database_name.to_owned()
             ))));
 
             items.push(ListItem::new("  > Collections"));
+            app.is_menu.push(true);
             for collection_name in &database.collections {
                 items.push(ListItem::new(Span::raw(format!(
                     "     {}",
                     collection_name.collection.to_owned()
                 ))));
+                app.is_menu.push(false);
             }
 
+            app.is_menu.push(true);
             items.push(ListItem::new("  > Views"));
             for view_name in &database.views {
                 items.push(ListItem::new(Span::raw(format!(
                     "     {}",
                     view_name.view.to_owned()
                 ))));
+                app.is_menu.push(false);
             }
 
+            app.is_menu.push(true);
             items.push(ListItem::new("  > Users"));
             for user in &database.users {
                 items.push(ListItem::new(Span::raw(format!(
                     "     {}",
                     user.user.to_owned()
                 ))));
+                app.is_menu.push(false);
             }
         }
 
@@ -130,11 +137,16 @@ fn draw_database_tree<B: Backend>(f: &mut Frame<B>, app: &mut App, area: Rect) {
                         _ => Style::default().fg(Color::White),
                     }),
             )
-            .highlight_style(Style::default().add_modifier(Modifier::ITALIC))
+            .highlight_style(
+                Style::default()
+                    .add_modifier(Modifier::ITALIC)
+                    .fg(Color::Cyan),
+            )
             .highlight_symbol("");
 
         let mut state = ListState::default();
         state.select(app.database_selected);
+
         f.render_stateful_widget(databases, chunks[0], &mut state);
     }
 }

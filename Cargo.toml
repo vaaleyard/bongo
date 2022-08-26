@@ -10,6 +10,7 @@ tui = "0.18"
 crossterm = "0.23"
 unicode-width = "0.1.4"
 linked-hash-map = "0.5.6"
+clearscreen = "1.0.10"
 
 [dependencies.mongodb]
 version = "2.2.0"

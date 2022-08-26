@@ -1,4 +1,5 @@
 mod app;
+mod helper;
 mod mongo;
 mod tree;
 mod ui;

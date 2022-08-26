@@ -1,16 +1,19 @@
+#[derive(Debug)]
 pub struct User {
     pub user: String,
 }
 
+#[derive(Debug)]
 pub struct Collection {
     pub collection: String,
 }
 
+#[derive(Debug)]
 pub struct View {
     pub view: String,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Database {
     pub collections: Vec<Collection>,
     pub views: Vec<View>,
