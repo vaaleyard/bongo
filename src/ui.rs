@@ -33,7 +33,7 @@ fn draw_input<B: Backend>(f: &mut Frame<B>, app: &App, area: Rect) {
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
         .border_style(match app.focus {
-            Some(Focus::InputBlock) => Style::default().fg(Color::Cyan),
+            Some(Focus::InputBlock) => Style::default().fg(Color::Blue),
             _ => Style::default().fg(Color::White),
         })
         .title(Span::raw("Input"));
@@ -133,14 +133,17 @@ fn draw_database_tree<B: Backend>(f: &mut Frame<B>, app: &mut App, area: Rect) {
                     .borders(Borders::ALL)
                     .border_type(BorderType::Rounded)
                     .border_style(match app.focus {
-                        Some(Focus::DatabaseBlock) => Style::default().fg(Color::Cyan),
+                        Some(Focus::DatabaseBlock) => Style::default()
+                            .fg(Color::Blue)
+                            .add_modifier(Modifier::BOLD),
                         _ => Style::default().fg(Color::White),
                     }),
             )
             .highlight_style(
                 Style::default()
-                    .add_modifier(Modifier::ITALIC)
-                    .fg(Color::Cyan),
+                    .add_modifier(Modifier::BOLD)
+                    .fg(Color::Black)
+                    .bg(Color::Blue),
             )
             .highlight_symbol("");
 
