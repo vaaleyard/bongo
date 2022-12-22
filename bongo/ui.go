@@ -20,20 +20,23 @@ func Ui(app *App) {
 		SetTitle("Finder").SetTitleAlign(tview.AlignLeft).
 		SetBorderPadding(0, 0, 1, 0)
 
-	app.inputBox.SetBorder(true).
-		SetTitleAlign(tview.AlignLeft).SetTitle("Input")
+	app.inputArea.
+		SetPlaceholder("Press q to exit, i to insert.").
+		SetBorder(true).
+		SetTitle("Input").SetTitleAlign(tview.AlignLeft)
 
 	app.preview.SetBorder(true).
 		SetTitle("Preview").SetTitleAlign(tview.AlignCenter)
 
 	layout := tview.NewFlex()
 	layout.
-		AddItem(app.inputBox, 0, 1, false).SetDirection(tview.FlexRow).
+		AddItem(app.inputArea, 0, 1, false).SetDirection(tview.FlexRow).
 		AddItem(
 			tview.NewFlex().SetDirection(tview.FlexColumn).
-				AddItem(app.treeView, 0, 1, true).
+				AddItem(app.treeView, 0, 1, false).
 				AddItem(app.preview, 0, 5, false),
-			0, 13, true)
+			0, 14, false).
+		SetBorderPadding(1, 1, 1, 1)
 
 	uri := "mongodb://admin:bergo@localhost:27017/?connect=direct"
 	client, _ := mongo.CreateMongoDBConnection(uri)
@@ -86,17 +89,27 @@ func selectNode(node *tview.TreeNode) {
 	node.SetExpanded(!node.IsExpanded())
 }
 
+// s is quitting the app
 func (app *App) inputHandler(event *tcell.EventKey) *tcell.EventKey {
-	switch event.Rune() {
-	case 81 | 113 | 3: // Q or q or ctrl-c
-		app.app.Stop()
+	if !app.inputArea.HasFocus() {
+		switch event.Rune() {
+		case 81, 113: // Q or q or ctrl-c
+			app.app.Stop()
+			return nil
+		case 73, 105, 58: //I or i or :
+			app.app.SetFocus(app.inputArea)
+			return nil
+		case 68, 100: // D or d
+			app.app.SetFocus(app.treeView)
+			return nil
+		case 80, 112: // P or p
+			app.app.SetFocus(app.preview)
+			return nil
+		}
+	}
+	if event.Key() == tcell.KeyESC {
+		app.app.SetFocus(app.pages)
 		return nil
-	case 73 | 105: //I or i
-		app.app.SetFocus(app.inputBox)
-	case 68 | 100: // D or d
-		app.app.SetFocus(app.treeView)
-	case 80 | 112: // P or p
-		app.app.SetFocus(app.preview)
 	}
 
 	return event
