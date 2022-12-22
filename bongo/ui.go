@@ -7,11 +7,11 @@ import (
 )
 
 func Ui(app *App) {
-	treeNode := tview.NewTreeNode(".").
+	treeNode := tview.NewTreeNode(".")
+	treeNode.
 		SetColor(tcell.ColorGreen)
 
-	treeView := tview.NewTreeView()
-	treeView.
+	app.treeView.
 		SetRoot(treeNode).
 		SetCurrentNode(treeNode).SetGraphics(false).
 		SetTopLevel(1).
@@ -20,19 +20,19 @@ func Ui(app *App) {
 		SetTitle("Finder").SetTitleAlign(tview.AlignLeft).
 		SetBorderPadding(0, 0, 1, 0)
 
-	inputBox := tview.NewBox().SetBorder(true).
+	app.inputBox.SetBorder(true).
 		SetTitleAlign(tview.AlignLeft).SetTitle("Input")
 
-	preview := tview.NewBox().SetBorder(true).
+	app.preview.SetBorder(true).
 		SetTitle("Preview").SetTitleAlign(tview.AlignCenter)
 
 	layout := tview.NewFlex()
 	layout.
-		AddItem(inputBox, 0, 1, false).SetDirection(tview.FlexRow).
+		AddItem(app.inputBox, 0, 1, false).SetDirection(tview.FlexRow).
 		AddItem(
 			tview.NewFlex().SetDirection(tview.FlexColumn).
-				AddItem(treeView, 0, 1, true).
-				AddItem(preview, 0, 5, false),
+				AddItem(app.treeView, 0, 1, true).
+				AddItem(app.preview, 0, 5, false),
 			0, 13, true)
 
 	uri := "mongodb://admin:bergo@localhost:27017/?connect=direct"
@@ -40,7 +40,8 @@ func Ui(app *App) {
 	mongoClient := mongo.Interface(client)
 
 	app.populateFinder(treeNode, mongoClient)
-	treeView.SetSelectedFunc(selectNode)
+	app.treeView.SetSelectedFunc(selectNode)
+	app.app.SetInputCapture(app.inputHandler)
 
 	app.pages.AddPage("layout", layout, true, true)
 	if err := app.app.SetRoot(app.pages, true).
@@ -83,4 +84,20 @@ func (app *App) populateFinder(target *tview.TreeNode, mongoClient *mongo.Mongo)
 
 func selectNode(node *tview.TreeNode) {
 	node.SetExpanded(!node.IsExpanded())
+}
+
+func (app *App) inputHandler(event *tcell.EventKey) *tcell.EventKey {
+	switch event.Rune() {
+	case 81 | 113 | 3: // Q or q or ctrl-c
+		app.app.Stop()
+		return nil
+	case 73 | 105: //I or i
+		app.app.SetFocus(app.inputBox)
+	case 68 | 100: // D or d
+		app.app.SetFocus(app.treeView)
+	case 80 | 112: // P or p
+		app.app.SetFocus(app.preview)
+	}
+
+	return event
 }
