@@ -7,6 +7,7 @@ type App struct {
 	pages    *tview.Pages
 	treeNode *tview.TreeNode
 	treeView *tview.TreeView
+	flex     *tview.Flex
 }
 
 func Init() *App {
@@ -15,5 +16,6 @@ func Init() *App {
 		pages:    tview.NewPages(),
 		treeNode: tview.NewTreeNode("."),
 		treeView: tview.NewTreeView(),
+		flex:     tview.NewFlex(),
 	}
 }
