@@ -7,36 +7,44 @@ import (
 )
 
 func Ui(app *App) {
-	app.treeNode.SetColor(tcell.ColorGreen)
+	treeNode := tview.NewTreeNode(".").
+		SetColor(tcell.ColorGreen)
 
-	app.treeView.
-		SetRoot(app.treeNode).
-		SetCurrentNode(app.treeNode).SetGraphics(false).
+	treeView := tview.NewTreeView()
+	treeView.
+		SetRoot(treeNode).
+		SetCurrentNode(treeNode).SetGraphics(false).
 		SetTopLevel(1).
 		SetPrefixes([]string{"> "}).
 		SetBorder(true).
 		SetTitle("Finder").SetTitleAlign(tview.AlignLeft).
 		SetBorderPadding(0, 0, 1, 0)
 
-	box := tview.NewBox().SetTitle("Input").
-		SetTitleAlign(tview.AlignLeft).SetBorder(true)
+	inputBox := tview.NewBox().SetBorder(true).
+		SetTitleAlign(tview.AlignLeft).SetTitle("Input")
 
-	// layout
-	app.flex.
-		AddItem(box, 0, 1, false).SetDirection(tview.FlexRow).
-		AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
-			AddItem(app.treeView, 0, 1, false).
-			AddItem(tview.NewBox().SetBorder(true).SetTitle("Preview"), 0, 5, false),
-			0, 13, false)
+	preview := tview.NewBox().SetBorder(true).
+		SetTitle("Preview").SetTitleAlign(tview.AlignCenter)
+
+	layout := tview.NewFlex()
+	layout.
+		AddItem(inputBox, 0, 1, false).SetDirection(tview.FlexRow).
+		AddItem(
+			tview.NewFlex().SetDirection(tview.FlexColumn).
+				AddItem(treeView, 0, 1, true).
+				AddItem(preview, 0, 5, false),
+			0, 13, true)
 
 	uri := "mongodb://admin:bergo@localhost:27017/?connect=direct"
 	client, _ := mongo.CreateMongoDBConnection(uri)
 	mongoClient := mongo.Interface(client)
 
-	app.populateFinder(app.treeNode, mongoClient)
+	app.populateFinder(treeNode, mongoClient)
+	treeView.SetSelectedFunc(selectNode)
 
-	if err := app.app.SetRoot(app.flex, true).
-		SetFocus(app.treeView).Run(); err != nil {
+	app.pages.AddPage("layout", layout, true, true)
+	if err := app.app.SetRoot(app.pages, true).
+		SetFocus(app.pages).Run(); err != nil {
 		panic(err)
 	}
 }
@@ -48,27 +56,31 @@ func (app *App) populateFinder(target *tview.TreeNode, mongoClient *mongo.Mongo)
 		target.AddChild(nodeDB)
 
 		collections, _ := mongoClient.ListCollections(db)
-		collectionNode := tview.NewTreeNode("Collections")
+		collectionNode := tview.NewTreeNode("Collections").Collapse()
 		nodeDB.AddChild(collectionNode)
 		for _, collection := range collections {
-			collectionTree := tview.NewTreeNode(collection)
-			collectionNode.AddChild(collectionTree)
+			collectionTreeNode := tview.NewTreeNode(collection)
+			collectionNode.AddChild(collectionTreeNode)
 		}
 
 		views, _ := mongoClient.ListViews(db)
-		viewsNode := tview.NewTreeNode("Views")
+		viewsNode := tview.NewTreeNode("Views").Collapse()
 		nodeDB.AddChild(viewsNode)
 		for _, view := range views {
-			viewTree := tview.NewTreeNode(view)
-			viewsNode.AddChild(viewTree)
+			viewsTree := tview.NewTreeNode(view)
+			viewsNode.AddChild(viewsTree)
 		}
 
 		users, _ := mongoClient.ListUsers(db)
-		usersNode := tview.NewTreeNode("Users")
+		usersNode := tview.NewTreeNode("Users").Collapse()
 		nodeDB.AddChild(usersNode)
 		for _, user := range users {
-			userTree := tview.NewTreeNode(user)
-			usersNode.AddChild(userTree)
+			userTreeNode := tview.NewTreeNode(user)
+			usersNode.AddChild(userTreeNode)
 		}
 	}
+}
+
+func selectNode(node *tview.TreeNode) {
+	node.SetExpanded(!node.IsExpanded())
 }
