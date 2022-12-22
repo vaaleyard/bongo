@@ -50,9 +50,13 @@ func (app *App) populateFinder(target *tview.TreeNode, mongoClient *mongo.Mongo)
 			viewsNode.AddChild(viewTree)
 		}
 
-		_, _ = mongoClient.ListUsers(db)
+		users, _ := mongoClient.ListUsers(db)
 		usersNode := tview.NewTreeNode("Users")
 		nodeDB.AddChild(usersNode)
+		for _, user := range users {
+			userTree := tview.NewTreeNode(user)
+			usersNode.AddChild(userTree)
+		}
 	}
 
 }

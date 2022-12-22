@@ -2,8 +2,6 @@ package mongo
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	m "go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -59,18 +57,19 @@ func (mon *Mongo) ListViews(db string) ([]string, error) {
 }
 
 func (mon *Mongo) ListUsers(db string) ([]string, error) {
-	var users struct {
-		Users interface{}
+	var users []string
+	var userDecoder struct {
+		Users []map[string]interface{}
 	}
 
-	singleResult := mon.client.Database(db).
+	_ = mon.client.Database(db).
 		RunCommand(
 			context.TODO(),
 			bson.D{{"usersInfo", 1}},
-		).Decode(&users)
+		).Decode(&userDecoder)
 
-	fmt.Println(users.Users, singleResult)
-	var yes interface{}
-	json.Unmarshal(users.Users, &yes)
-	return []string{""}, nil
+	if len(userDecoder.Users) != 0 {
+		users = append(users, userDecoder.Users[0]["user"].(string))
+	}
+	return users, nil
 }
