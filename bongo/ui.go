@@ -13,7 +13,21 @@ func Ui(app *App) {
 		SetRoot(app.treeNode).
 		SetCurrentNode(app.treeNode).SetGraphics(false).
 		SetTopLevel(1).
-		SetPrefixes([]string{"> "})
+		SetPrefixes([]string{"> "}).
+		SetBorder(true).
+		SetTitle("Finder").SetTitleAlign(tview.AlignLeft).
+		SetBorderPadding(0, 0, 1, 0)
+
+	box := tview.NewBox().SetTitle("Input").
+		SetTitleAlign(tview.AlignLeft).SetBorder(true)
+
+	// layout
+	app.flex.
+		AddItem(box, 0, 1, false).SetDirection(tview.FlexRow).
+		AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
+			AddItem(app.treeView, 0, 1, false).
+			AddItem(tview.NewBox().SetBorder(true).SetTitle("Preview"), 0, 5, false),
+			0, 13, false)
 
 	uri := "mongodb://admin:bergo@localhost:27017/?connect=direct"
 	client, _ := mongo.CreateMongoDBConnection(uri)
@@ -21,7 +35,8 @@ func Ui(app *App) {
 
 	app.populateFinder(app.treeNode, mongoClient)
 
-	if err := app.app.SetRoot(app.treeView, true).Run(); err != nil {
+	if err := app.app.SetRoot(app.flex, true).
+		SetFocus(app.treeView).Run(); err != nil {
 		panic(err)
 	}
 }
