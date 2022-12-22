@@ -22,6 +22,8 @@ func Ui(app *App) {
 
 	app.inputArea.
 		SetPlaceholder("Press q to exit, i to insert.").
+		SetPlaceholderStyle(tcell.StyleDefault.Attributes(tcell.AttrDim)).
+		SetBorderPadding(0, 0, 1, 0).
 		SetBorder(true).
 		SetTitle("Input").SetTitleAlign(tview.AlignLeft)
 
@@ -44,7 +46,7 @@ func Ui(app *App) {
 
 	app.populateFinder(treeNode, mongoClient)
 	app.treeView.SetSelectedFunc(selectNode)
-	app.app.SetInputCapture(app.inputHandler)
+	app.app.SetInputCapture(app.appInputHandler)
 
 	app.pages.AddPage("layout", layout, true, true)
 	if err := app.app.SetRoot(app.pages, true).
@@ -89,8 +91,7 @@ func selectNode(node *tview.TreeNode) {
 	node.SetExpanded(!node.IsExpanded())
 }
 
-// s is quitting the app
-func (app *App) inputHandler(event *tcell.EventKey) *tcell.EventKey {
+func (app *App) appInputHandler(event *tcell.EventKey) *tcell.EventKey {
 	if !app.inputArea.HasFocus() {
 		switch event.Rune() {
 		case 81, 113: // Q or q or ctrl-c
