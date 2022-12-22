@@ -1,6 +1,7 @@
 package bongo
 
 import (
+	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/vaaleyard/bongo/mongo"
@@ -25,7 +26,8 @@ func Ui(app *App) {
 		SetPlaceholderStyle(tcell.StyleDefault.Attributes(tcell.AttrDim)).
 		SetBorderPadding(0, 0, 1, 0).
 		SetBorder(true).
-		SetTitle("Input").SetTitleAlign(tview.AlignLeft)
+		SetTitle("Input").SetTitleAlign(tview.AlignLeft).
+		SetInputCapture(app.inputAreaInputHandler)
 
 	app.preview.SetBorder(true).
 		SetTitle("Preview").SetTitleAlign(tview.AlignCenter)
@@ -110,6 +112,17 @@ func (app *App) appInputHandler(event *tcell.EventKey) *tcell.EventKey {
 	}
 	if event.Key() == tcell.KeyESC {
 		app.app.SetFocus(app.pages)
+		return nil
+	}
+
+	return event
+}
+
+func (app *App) inputAreaInputHandler(event *tcell.EventKey) *tcell.EventKey {
+	if event.Key() == tcell.KeyEnter {
+		app.preview.Clear()
+		fmt.Fprint(app.preview, string(app.inputArea.GetText()))
+
 		return nil
 	}
 

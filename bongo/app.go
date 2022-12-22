@@ -6,7 +6,7 @@ type App struct {
 	app       *tview.Application
 	pages     *tview.Pages
 	treeView  *tview.TreeView
-	preview   *tview.Box
+	preview   *tview.TextView
 	inputArea *tview.TextArea
 }
 
@@ -15,7 +15,7 @@ func Init() *App {
 		app:       tview.NewApplication(),
 		pages:     tview.NewPages(),
 		treeView:  tview.NewTreeView(),
-		preview:   tview.NewBox(),
+		preview:   tview.NewTextView(),
 		inputArea: tview.NewTextArea(),
 	}
 }
