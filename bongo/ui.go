@@ -6,13 +6,12 @@ import (
 	"github.com/vaaleyard/bongo/mongo"
 )
 
-func (app *App) Ui() {
-	rootDir := "."
-	root := tview.NewTreeNode(rootDir).
-		SetColor(tcell.ColorRed)
-	tree := tview.NewTreeView().
-		SetRoot(root).
-		SetCurrentNode(root).SetGraphics(false).
+func Ui(app *App) {
+	app.treeNode.SetColor(tcell.ColorGreen)
+
+	app.treeView.
+		SetRoot(app.treeNode).
+		SetCurrentNode(app.treeNode).SetGraphics(false).
 		SetTopLevel(1).
 		SetPrefixes([]string{"> "})
 
@@ -20,15 +19,14 @@ func (app *App) Ui() {
 	client, _ := mongo.CreateMongoDBConnection(uri)
 	mongoClient := mongo.Interface(client)
 
-	app.populateFinder(root, mongoClient)
+	app.populateFinder(app.treeNode, mongoClient)
 
-	if err := app.app.SetRoot(tree, true).Run(); err != nil {
+	if err := app.app.SetRoot(app.treeView, true).Run(); err != nil {
 		panic(err)
 	}
 }
 
 func (app *App) populateFinder(target *tview.TreeNode, mongoClient *mongo.Mongo) {
-
 	dbs, _ := mongoClient.ListDatabaseNames()
 	for _, db := range dbs {
 		nodeDB := tview.NewTreeNode(db)
@@ -58,5 +56,4 @@ func (app *App) populateFinder(target *tview.TreeNode, mongoClient *mongo.Mongo)
 			usersNode.AddChild(userTree)
 		}
 	}
-
 }

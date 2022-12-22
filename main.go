@@ -4,5 +4,5 @@ import "github.com/vaaleyard/bongo/bongo"
 
 func main() {
 	app := bongo.Init()
-	app.Ui()
+	bongo.Ui(app)
 }
