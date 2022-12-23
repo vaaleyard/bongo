@@ -7,6 +7,12 @@ import (
 	"github.com/vaaleyard/bongo/mongo"
 )
 
+const (
+	blueColor  = tcell.ColorCornflowerBlue
+	whiteColor = tcell.ColorLightGrey
+	lightWhite = tcell.ColorLightGrey
+)
+
 func Ui(app *App) {
 	treeNode := tview.NewTreeNode(".")
 	treeNode.
@@ -19,7 +25,17 @@ func Ui(app *App) {
 		SetPrefixes([]string{"> "}).
 		SetBorder(true).
 		SetTitle("Finder").SetTitleAlign(tview.AlignLeft).
-		SetBorderPadding(0, 0, 1, 0)
+		SetBorderPadding(0, 0, 1, 0).
+		SetFocusFunc(func() {
+			app.treeView.SetBorderColor(blueColor).
+				SetTitleColor(blueColor).
+				SetTitle("Finder*")
+		}).
+		SetBlurFunc(func() {
+			app.treeView.SetBorderColor(whiteColor).
+				SetTitleColor(whiteColor).
+				SetTitle("Finder")
+		})
 
 	app.inputArea.
 		SetPlaceholder("Press q to exit, i to insert.").
@@ -27,10 +43,30 @@ func Ui(app *App) {
 		SetBorderPadding(0, 0, 1, 0).
 		SetBorder(true).
 		SetTitle("Input").SetTitleAlign(tview.AlignLeft).
-		SetInputCapture(app.inputAreaInputHandler)
+		SetInputCapture(app.inputAreaInputHandler).
+		SetFocusFunc(func() {
+			app.inputArea.SetBorderColor(blueColor).
+				SetTitleColor(blueColor).
+				SetTitle("Input*")
+		}).
+		SetBlurFunc(func() {
+			app.inputArea.SetBorderColor(whiteColor).
+				SetTitleColor(whiteColor).
+				SetTitle("Input")
+		})
 
 	app.preview.SetBorder(true).
-		SetTitle("Preview").SetTitleAlign(tview.AlignCenter)
+		SetTitle("Preview").SetTitleAlign(tview.AlignCenter).
+		SetFocusFunc(func() {
+			app.preview.SetBorderColor(blueColor).
+				SetTitleColor(blueColor).
+				SetTitle("Preview*")
+		}).
+		SetBlurFunc(func() {
+			app.preview.SetBorderColor(whiteColor).
+				SetTitleColor(whiteColor).
+				SetTitle("Preview")
+		})
 
 	layout := tview.NewFlex()
 	layout.
@@ -56,30 +92,37 @@ func Ui(app *App) {
 func (app *App) populateFinder(target *tview.TreeNode, mongoClient *mongo.Mongo) {
 	dbs, _ := mongoClient.ListDatabaseNames()
 	for _, db := range dbs {
-		nodeDB := tview.NewTreeNode(db)
+		nodeDB := tview.NewTreeNode(db).
+			SetColor(blueColor)
 		target.AddChild(nodeDB)
 
 		collections, _ := mongoClient.ListCollections(db)
-		collectionNode := tview.NewTreeNode("Collections").Collapse()
+		collectionNode := tview.NewTreeNode("Collections").Collapse().
+			SetColor(blueColor)
 		nodeDB.AddChild(collectionNode)
 		for _, collection := range collections {
-			collectionTreeNode := tview.NewTreeNode(collection)
+			collectionTreeNode := tview.NewTreeNode(collection).
+				SetColor(lightWhite)
 			collectionNode.AddChild(collectionTreeNode)
 		}
 
 		views, _ := mongoClient.ListViews(db)
-		viewsNode := tview.NewTreeNode("Views").Collapse()
+		viewsNode := tview.NewTreeNode("Views").Collapse().
+			SetColor(blueColor)
 		nodeDB.AddChild(viewsNode)
 		for _, view := range views {
-			viewsTree := tview.NewTreeNode(view)
+			viewsTree := tview.NewTreeNode(view).
+				SetColor(lightWhite)
 			viewsNode.AddChild(viewsTree)
 		}
 
 		users, _ := mongoClient.ListUsers(db)
-		usersNode := tview.NewTreeNode("Users").Collapse()
+		usersNode := tview.NewTreeNode("Users").Collapse().
+			SetColor(blueColor)
 		nodeDB.AddChild(usersNode)
 		for _, user := range users {
-			userTreeNode := tview.NewTreeNode(user)
+			userTreeNode := tview.NewTreeNode(user).
+				SetColor(lightWhite)
 			usersNode.AddChild(userTreeNode)
 		}
 	}
@@ -117,7 +160,7 @@ func (app *App) appInputHandler(event *tcell.EventKey) *tcell.EventKey {
 func (app *App) inputAreaInputHandler(event *tcell.EventKey) *tcell.EventKey {
 	if event.Key() == tcell.KeyEnter {
 		app.preview.Clear()
-		fmt.Fprint(app.preview, string(app.inputArea.GetText()))
+		_, _ = fmt.Fprint(app.preview, string(app.inputArea.GetText()))
 
 		return nil
 	}
