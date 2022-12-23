@@ -42,11 +42,7 @@ func Ui(app *App) {
 			0, 14, false).
 		SetBorderPadding(1, 1, 1, 1)
 
-	uri := "mongodb://admin:bergo@localhost:27017/?connect=direct"
-	client, _ := mongo.CreateMongoDBConnection(uri)
-	mongoClient := mongo.Interface(client)
-
-	app.populateFinder(treeNode, mongoClient)
+	app.populateFinder(treeNode, app.mongoClient)
 	app.treeView.SetSelectedFunc(selectNode)
 	app.app.SetInputCapture(app.appInputHandler)
 
