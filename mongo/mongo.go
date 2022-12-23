@@ -16,7 +16,7 @@ func Interface(client *m.Client) *Mongo {
 	return &Mongo{client}
 }
 
-func CreateMongoDBConnection(uri string) (*m.Client, error) {
+func NewConnection(uri string) (*m.Client, error) {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
 	client, err := m.Connect(
