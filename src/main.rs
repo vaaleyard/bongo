@@ -1,7 +1,6 @@
 mod app;
 mod helper;
 mod mongo;
-mod tree;
 mod ui;
 
 use app::{run_app, App};
@@ -12,7 +11,9 @@ use crossterm::{
 };
 
 use std::io;
-use tui::{backend::CrosstermBackend, Terminal};
+use tui::Terminal;
+use tui::backend::CrosstermBackend;
+
 
 fn main() -> Result<(), io::Error> {
     enable_raw_mode()?;

@@ -1,12 +1,13 @@
-use std::{collections::BTreeMap, io};
+use std::io;
 
 use crossterm::event::{self, Event, KeyCode};
 use tui::{backend::Backend, Terminal};
+use tui_tree_widget::TreeItem;
+use helper::StatefulTree;
 
 use crate::{
     helper,
     mongo::{get_collections_from_db, get_database_names, get_users_from_db, get_views_from_db},
-    tree::Database,
     ui::ui,
 };
 
@@ -20,68 +21,65 @@ pub enum Focus {
     InputBlock,
 }
 
-pub struct App {
+pub struct App<'a> {
     pub input: String,
     pub input_mode: InputMode,
     pub messages: Vec<String>,
     pub focus: Option<Focus>,
-    // database block control
-    pub is_menu: Vec<bool>,
-    pub database_selected: Option<usize>,
-    pub database_tree_size: Option<usize>,
-    pub database_tree: BTreeMap<String, Database>,
     mongo_uri: String,
+    pub tree: StatefulTree<'a>,
 }
 
-impl Default for App {
-    fn default() -> App {
+impl<'a> Default for App<'a> {
+    fn default() -> App<'a> {
         App {
             input: String::new(),
             input_mode: InputMode::Normal,
             messages: Vec::new(),
-            is_menu: Vec::new(),
             focus: None,
-            database_selected: Some(0),
-            database_tree_size: Some(0),
-            database_tree: BTreeMap::new(),
             mongo_uri: String::new(),
+            tree: StatefulTree::new(),
         }
     }
 }
 
-impl App {
+impl<'a> App<'a> {
     // TODO: return a Result
     pub fn populate_hashmap(&mut self) {
         get_database_names(self.mongo_uri.to_owned())
             .unwrap()
             .iter()
             .for_each(|database| {
-                let mut database_object = Database::default();
 
+                let mut database_items = Vec::new();
+                let mut items: Vec<TreeItem> = Vec::new();
                 get_collections_from_db(database.to_string(), self.mongo_uri.to_owned())
                     .unwrap()
                     .iter()
                     .for_each(|collection| {
-                        database_object.new_collection(collection.to_string());
+                        items.push(TreeItem::new_leaf(collection.to_string()))
                     });
+                database_items.push(TreeItem::new("Collections", items.clone()));
 
+                items.clear();
                 get_views_from_db(database.to_string(), self.mongo_uri.to_owned())
                     .unwrap()
                     .iter()
                     .for_each(|view| {
-                        database_object.new_view(view.to_string());
+                        items.push(TreeItem::new_leaf(view.to_string()))
                     });
+                database_items.push(TreeItem::new("Views", items.clone()));
 
+                items.clear();
                 get_users_from_db(database.to_string(), self.mongo_uri.to_owned())
                     .unwrap()
                     .iter()
                     .for_each(|user| {
-                        database_object.new_user(user.to_string());
+                        items.push(TreeItem::new_leaf(user.to_string()))
                     });
+                database_items.push(TreeItem::new("Users", items.clone()));
 
-                self.database_tree
-                    .entry(database.to_string())
-                    .or_insert(database_object);
+                self.tree.items.push(TreeItem::new(database.to_string(), database_items));
             });
     }
 
@@ -124,52 +122,36 @@ pub fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Resu
                     }
                     KeyCode::Char('j') => match app.focus {
                         Some(Focus::DatabaseBlock) => {
-                            // I confess it's weird, but it seems to be working
-                            if app.database_tree_size
-                                > usize::checked_add(
-                                    app.database_selected.unwrap(),
-                                    usize::try_from(1).unwrap(),
-                                )
-                            {
-                                app.database_selected = usize::checked_add(
-                                    app.database_selected.unwrap(),
-                                    usize::try_from(1).unwrap(),
-                                );
-                            }
+                            app.tree.down();
                         }
                         _ => {}
                     },
                     KeyCode::Char('k') => match app.focus {
                         Some(Focus::DatabaseBlock) => {
-                            if app.database_selected != Some(0) {
-                                app.database_selected = usize::checked_sub(
-                                    app.database_selected.unwrap(),
-                                    usize::try_from(1).unwrap(),
-                                );
-                            }
+                            app.tree.up();
                         }
                         _ => {}
                     },
                     KeyCode::Char('g') => match app.focus {
                         Some(Focus::DatabaseBlock) => {
-                            app.database_selected = Some(0);
+                            app.tree.first();
                         }
                         _ => {}
                     },
                     KeyCode::Char('G') => match app.focus {
                         Some(Focus::DatabaseBlock) => {
-                            app.database_selected =
-                                usize::checked_sub(app.database_tree_size.unwrap(), 1);
+                            app.tree.last();
                         }
                         _ => {}
                     },
                     KeyCode::Enter => match app.focus {
                         Some(Focus::DatabaseBlock) => {
-                            app.messages
-                                .push(app.is_menu[app.database_selected.unwrap()].to_string());
+                            app.tree.toggle();
                         }
                         _ => {}
                     },
+                    KeyCode::Left => app.tree.left(),
+                    KeyCode::Right => app.tree.right(),
                     _ => {}
                 },
                 InputMode::Insert => match key.code {

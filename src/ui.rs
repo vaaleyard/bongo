@@ -3,9 +3,10 @@ use tui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans, Text},
-    widgets::{Block, BorderType, Borders, List, ListItem, ListState, Paragraph},
+    widgets::{Block, BorderType, Borders, List, ListItem, Paragraph},
     Frame,
 };
+use tui_tree_widget::Tree;
 use unicode_width::UnicodeWidthStr;
 
 use crate::app::{App, Focus, InputMode};
@@ -84,48 +85,7 @@ fn draw_database_tree<B: Backend>(f: &mut Frame<B>, app: &mut App, area: Rect) {
             .direction(Direction::Vertical)
             .split(chunks[0]);
 
-        let mut items = Vec::new();
-        for (database_name, database) in &app.database_tree {
-            app.is_menu.push(true);
-            items.push(ListItem::new(Span::raw(format!(
-                "> {}",
-                database_name.to_owned()
-            ))));
-
-            items.push(ListItem::new("  > Collections"));
-            app.is_menu.push(true);
-            for collection_name in &database.collections {
-                items.push(ListItem::new(Span::raw(format!(
-                    "     {}",
-                    collection_name.collection.to_owned()
-                ))));
-                app.is_menu.push(false);
-            }
-
-            app.is_menu.push(true);
-            items.push(ListItem::new("  > Views"));
-            for view_name in &database.views {
-                items.push(ListItem::new(Span::raw(format!(
-                    "     {}",
-                    view_name.view.to_owned()
-                ))));
-                app.is_menu.push(false);
-            }
-
-            app.is_menu.push(true);
-            items.push(ListItem::new("  > Users"));
-            for user in &database.users {
-                items.push(ListItem::new(Span::raw(format!(
-                    "     {}",
-                    user.user.to_owned()
-                ))));
-                app.is_menu.push(false);
-            }
-        }
-
-        app.database_tree_size = Some(items.len());
-
-        let databases = List::new(items)
+        let items = Tree::new(app.tree.items.clone())
             .block(
                 Block::default()
                     .title("Databases")
@@ -147,10 +107,7 @@ fn draw_database_tree<B: Backend>(f: &mut Frame<B>, app: &mut App, area: Rect) {
             )
             .highlight_symbol("");
 
-        let mut state = ListState::default();
-        state.select(app.database_selected);
-
-        f.render_stateful_widget(databases, chunks[0], &mut state);
+        f.render_stateful_widget(items, chunks[0], &mut app.tree.state);
     }
 }
 
