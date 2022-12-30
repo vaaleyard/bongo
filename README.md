@@ -13,7 +13,18 @@ A mongo management TUI dashboard <br>
 ## Screenshot
 ![screenshot](./assets/screenshot.png)
 
+## Features
+- Navigate through database collections, views and users in a tree view
+- Run a database command and view it's output (and copy it to the clipboard)
+- Vim keybindings
+
 ## Installation
+### With the binary
+Download the binary for your distribution in the releases page.
+### With `go install`
+```shell
+go install github.com/vaaleyard/bongo@latest
+```
 ### With make
 ```
 git clone https://github.com/vaaleyard/bongo.git
@@ -24,7 +35,18 @@ make build
 Export your mongodb uri and run bongo:
 ```bash
 export MONGODB_URI='mongodb://user:password@host:27017/'
-./bongo/bongo --mongodb-uri $MONGODB_URI
+bongo --mongodb-uri $MONGODB_URI
+```
+
+## Keybindings
+```
+esc: go to normal mode (unfocus)
+d/D: focus the database finder block
+i/I/: (colon) : focus the input block
+p/P: focus the preview block
+y/Y: (if preview is focused) [yank/copy] the content of preview block
+s/S: (if database tree is focused) select the database to which database the command in input block will run
+q/Q/Ctrl-c: quit
 ```
 
 ## Features to do
