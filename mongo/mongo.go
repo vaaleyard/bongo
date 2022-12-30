@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+	"encoding/json"
 	"go.mongodb.org/mongo-driver/bson"
 	m "go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -72,4 +73,17 @@ func (mon *Mongo) ListUsers(db string) ([]string, error) {
 		users = append(users, userDecoder.Users[0]["user"].(string))
 	}
 	return users, nil
+}
+
+func (mon *Mongo) RunCommand(database string, command string) string {
+	var result bson.M
+	mon.client.Database(database).
+		RunCommand(
+			context.TODO(),
+			bson.D{{command, 1}},
+		).
+		Decode(&result)
+
+	output, _ := json.MarshalIndent(result, "", "    ")
+	return string(output)
 }
