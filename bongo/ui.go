@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"github.com/vaaleyard/bongo/mongo"
 )
 
 const (
@@ -78,7 +77,7 @@ func Ui(app *App) {
 			0, 14, false).
 		SetBorderPadding(1, 1, 1, 1)
 
-	app.populateFinder(treeNode, app.mongoClient)
+	app.populateFinder(treeNode)
 	app.treeView.SetSelectedFunc(selectNode)
 	app.treeView.SetInputCapture(app.treeInputHandler)
 	app.app.SetInputCapture(app.appInputHandler)
@@ -90,14 +89,14 @@ func Ui(app *App) {
 	}
 }
 
-func (app *App) populateFinder(target *tview.TreeNode, mongoClient *mongo.Mongo) {
-	dbs, _ := mongoClient.ListDatabaseNames()
+func (app *App) populateFinder(target *tview.TreeNode) {
+	dbs, _ := app.database.Client.ListDatabaseNames()
 	for _, db := range dbs {
 		nodeDB := tview.NewTreeNode(db).
 			SetColor(blueColor)
 		target.AddChild(nodeDB)
 
-		collections, _ := mongoClient.ListCollections(db)
+		collections, _ := app.database.Client.ListCollections(db)
 		collectionNode := tview.NewTreeNode("Collections").Collapse().
 			SetColor(blueColor)
 		nodeDB.AddChild(collectionNode)
@@ -107,7 +106,7 @@ func (app *App) populateFinder(target *tview.TreeNode, mongoClient *mongo.Mongo)
 			collectionNode.AddChild(collectionTreeNode)
 		}
 
-		views, _ := mongoClient.ListViews(db)
+		views, _ := app.database.Client.ListViews(db)
 		viewsNode := tview.NewTreeNode("Views").Collapse().
 			SetColor(blueColor)
 		nodeDB.AddChild(viewsNode)
@@ -117,7 +116,7 @@ func (app *App) populateFinder(target *tview.TreeNode, mongoClient *mongo.Mongo)
 			viewsNode.AddChild(viewsTree)
 		}
 
-		users, _ := mongoClient.ListUsers(db)
+		users, _ := app.database.Client.ListUsers(db)
 		usersNode := tview.NewTreeNode("Users").Collapse().
 			SetColor(blueColor)
 		nodeDB.AddChild(usersNode)
@@ -179,17 +178,17 @@ func (app *App) inputAreaInputHandler(event *tcell.EventKey) *tcell.EventKey {
 	if event.Key() == tcell.KeyEnter {
 		app.preview.Clear()
 
-		var database string
+		var db string
 		refInterface := app.treeView.GetCurrentNode().GetReference()
 		reference := refInterface.(map[bool]string)
 		if reference == nil {
-			database = "admin"
+			db = "admin"
 		} else {
-			database = reference[true]
+			db = reference[true]
 		}
 
 		command := app.inputArea.GetText()
-		output := app.mongoClient.RunCommand(database, command)
+		output := app.database.Client.RunCommand(db, command)
 		_, _ = fmt.Fprint(app.preview, output)
 
 		return nil

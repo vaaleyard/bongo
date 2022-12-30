@@ -2,16 +2,17 @@ package bongo
 
 import (
 	"github.com/rivo/tview"
-	"github.com/vaaleyard/bongo/mongo"
+	"github.com/vaaleyard/bongo/database"
+	m "github.com/vaaleyard/bongo/database/mongo"
 )
 
 type App struct {
-	app         *tview.Application
-	pages       *tview.Pages
-	treeView    *tview.TreeView
-	preview     *tview.TextView
-	inputArea   *tview.TextArea
-	mongoClient *mongo.Mongo
+	app       *tview.Application
+	pages     *tview.Pages
+	treeView  *tview.TreeView
+	preview   *tview.TextView
+	inputArea *tview.TextArea
+	database  *database.Service
 }
 
 func Init(uri string) (*App, error) {
@@ -23,8 +24,9 @@ func Init(uri string) (*App, error) {
 		inputArea: tview.NewTextArea(),
 	}
 
-	client, _ := mongo.NewConnection(uri)
-	a.mongoClient = mongo.Interface(client)
+	mongoConnection := m.NewConnection(uri)
+	dbService := database.New(mongoConnection)
+	a.database = dbService
 
 	return &a, nil
 }
