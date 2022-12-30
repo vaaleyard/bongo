@@ -9,26 +9,22 @@ import (
 	"time"
 )
 
-type Mongo struct {
+type DB struct {
 	client *m.Client
 }
 
-func Interface(client *m.Client) *Mongo {
-	return &Mongo{client}
-}
-
-func NewConnection(uri string) (*m.Client, error) {
+func NewConnection(uri string) *DB {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
-	client, err := m.Connect(
+	client, _ := m.Connect(
 		ctx,
 		options.Client().ApplyURI(uri),
 	)
 
-	return client, err
+	return &DB{client: client}
 }
 
-func (mon *Mongo) ListDatabaseNames() ([]string, error) {
+func (mon *DB) ListDatabaseNames() ([]string, error) {
 	databases, err := mon.client.ListDatabaseNames(
 		context.TODO(),
 		bson.D{},
@@ -37,7 +33,7 @@ func (mon *Mongo) ListDatabaseNames() ([]string, error) {
 	return databases, err
 }
 
-func (mon *Mongo) ListCollections(db string) ([]string, error) {
+func (mon *DB) ListCollections(db string) ([]string, error) {
 	collections, err := mon.client.Database(db).
 		ListCollectionNames(
 			context.TODO(),
@@ -47,7 +43,7 @@ func (mon *Mongo) ListCollections(db string) ([]string, error) {
 	return collections, err
 }
 
-func (mon *Mongo) ListViews(db string) ([]string, error) {
+func (mon *DB) ListViews(db string) ([]string, error) {
 	views, err := mon.client.Database(db).
 		ListCollectionNames(
 			context.TODO(),
@@ -57,7 +53,7 @@ func (mon *Mongo) ListViews(db string) ([]string, error) {
 	return views, err
 }
 
-func (mon *Mongo) ListUsers(db string) ([]string, error) {
+func (mon *DB) ListUsers(db string) ([]string, error) {
 	var users []string
 	var userDecoder struct {
 		Users []map[string]interface{}
@@ -75,7 +71,7 @@ func (mon *Mongo) ListUsers(db string) ([]string, error) {
 	return users, nil
 }
 
-func (mon *Mongo) RunCommand(database string, command string) string {
+func (mon *DB) RunCommand(database string, command string) string {
 	var result bson.M
 	mon.client.Database(database).
 		RunCommand(
