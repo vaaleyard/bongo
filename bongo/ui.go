@@ -80,6 +80,7 @@ func Ui(app *App) {
 
 	app.populateFinder(treeNode, app.mongoClient)
 	app.treeView.SetSelectedFunc(selectNode)
+	app.treeView.SetInputCapture(app.treeInputHandler)
 	app.app.SetInputCapture(app.appInputHandler)
 
 	app.pages.AddPage("layout", layout, true, true)
@@ -132,6 +133,23 @@ func selectNode(node *tview.TreeNode) {
 	node.SetExpanded(!node.IsExpanded())
 }
 
+func (app *App) treeInputHandler(event *tcell.EventKey) *tcell.EventKey {
+	reference := make(map[bool]string)
+
+	if event.Rune() == 83 || event.Rune() == 115 { // S or s
+		if app.treeView.GetCurrentNode().GetReference() == nil {
+			reference[true] = app.treeView.GetCurrentNode().GetText()
+			app.treeView.GetCurrentNode().SetReference(reference)
+		} else {
+			reference[false] = app.treeView.GetCurrentNode().GetText()
+			app.treeView.GetCurrentNode().SetReference(reference)
+		}
+		return nil
+	}
+
+	return event
+}
+
 func (app *App) appInputHandler(event *tcell.EventKey) *tcell.EventKey {
 	if !app.inputArea.HasFocus() {
 		switch event.Rune() {
@@ -160,7 +178,19 @@ func (app *App) appInputHandler(event *tcell.EventKey) *tcell.EventKey {
 func (app *App) inputAreaInputHandler(event *tcell.EventKey) *tcell.EventKey {
 	if event.Key() == tcell.KeyEnter {
 		app.preview.Clear()
-		_, _ = fmt.Fprint(app.preview, string(app.inputArea.GetText()))
+
+		var database string
+		refInterface := app.treeView.GetCurrentNode().GetReference()
+		reference := refInterface.(map[bool]string)
+		if reference == nil {
+			database = "admin"
+		} else {
+			database = reference[true]
+		}
+
+		command := app.inputArea.GetText()
+		output := app.mongoClient.RunCommand(database, command)
+		_, _ = fmt.Fprint(app.preview, output)
 
 		return nil
 	}
