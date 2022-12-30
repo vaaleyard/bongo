@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"golang.design/x/clipboard"
 )
 
 const (
@@ -82,6 +83,7 @@ func Ui(app *App) {
 		node.SetExpanded(!node.IsExpanded())
 	}).SetInputCapture(app.treeInputHandler)
 
+	app.preview.SetInputCapture(app.previewInputHandler)
 	app.app.SetInputCapture(app.appInputHandler)
 
 	app.pages.AddPage("layout", layout, true, true)
@@ -128,6 +130,22 @@ func (app *App) populateFinder(target *tview.TreeNode) {
 			usersNode.AddChild(userTreeNode)
 		}
 	}
+}
+
+func (app *App) previewInputHandler(event *tcell.EventKey) *tcell.EventKey {
+	if event.Rune() == 89 || event.Rune() == 121 { // Y or y
+		content := app.preview.GetText(true)
+
+		err := clipboard.Init()
+		if err != nil {
+			panic(err)
+		}
+
+		clipboard.Write(clipboard.FmtText, []byte(content))
+		return nil
+	}
+
+	return event
 }
 
 func (app *App) treeInputHandler(event *tcell.EventKey) *tcell.EventKey {
