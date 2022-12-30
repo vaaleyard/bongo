@@ -17,7 +17,7 @@ func Ui(app *App) {
 	treeNode.
 		SetColor(tcell.ColorGreen)
 
-	app.treeView.
+	app.tree.
 		SetRoot(treeNode).
 		SetCurrentNode(treeNode).SetGraphics(false).
 		SetTopLevel(1).
@@ -26,17 +26,17 @@ func Ui(app *App) {
 		SetTitle("Finder").SetTitleAlign(tview.AlignLeft).
 		SetBorderPadding(0, 0, 1, 0).
 		SetFocusFunc(func() {
-			app.treeView.SetBorderColor(blueColor).
+			app.tree.SetBorderColor(blueColor).
 				SetTitleColor(blueColor).
 				SetTitle("Finder*")
 		}).
 		SetBlurFunc(func() {
-			app.treeView.SetBorderColor(whiteColor).
+			app.tree.SetBorderColor(whiteColor).
 				SetTitleColor(whiteColor).
 				SetTitle("Finder")
 		})
 
-	app.inputArea.
+	app.input.
 		SetPlaceholder("Press q to exit, i to insert.").
 		SetPlaceholderStyle(tcell.StyleDefault.Attributes(tcell.AttrDim)).
 		SetBorderPadding(0, 0, 1, 0).
@@ -44,12 +44,12 @@ func Ui(app *App) {
 		SetTitle("Input").SetTitleAlign(tview.AlignLeft).
 		SetInputCapture(app.inputAreaInputHandler).
 		SetFocusFunc(func() {
-			app.inputArea.SetBorderColor(blueColor).
+			app.input.SetBorderColor(blueColor).
 				SetTitleColor(blueColor).
 				SetTitle("Input*")
 		}).
 		SetBlurFunc(func() {
-			app.inputArea.SetBorderColor(whiteColor).
+			app.input.SetBorderColor(whiteColor).
 				SetTitleColor(whiteColor).
 				SetTitle("Input")
 		})
@@ -69,17 +69,19 @@ func Ui(app *App) {
 
 	layout := tview.NewFlex()
 	layout.
-		AddItem(app.inputArea, 0, 1, false).SetDirection(tview.FlexRow).
+		AddItem(app.input, 0, 1, false).SetDirection(tview.FlexRow).
 		AddItem(
 			tview.NewFlex().SetDirection(tview.FlexColumn).
-				AddItem(app.treeView, 0, 1, false).
+				AddItem(app.tree, 0, 1, false).
 				AddItem(app.preview, 0, 5, false),
 			0, 14, false).
 		SetBorderPadding(1, 1, 1, 1)
 
 	app.populateFinder(treeNode)
-	app.treeView.SetSelectedFunc(selectNode)
-	app.treeView.SetInputCapture(app.treeInputHandler)
+	app.tree.SetSelectedFunc(func(node *tview.TreeNode) {
+		node.SetExpanded(!node.IsExpanded())
+	}).SetInputCapture(app.treeInputHandler)
+
 	app.app.SetInputCapture(app.appInputHandler)
 
 	app.pages.AddPage("layout", layout, true, true)
@@ -90,36 +92,36 @@ func Ui(app *App) {
 }
 
 func (app *App) populateFinder(target *tview.TreeNode) {
-	dbs, _ := app.database.Client.ListDatabaseNames()
-	for _, db := range dbs {
-		nodeDB := tview.NewTreeNode(db).
+	names, _ := app.database.Client.ListDatabaseNames()
+	for _, databaseName := range names {
+		databaseNode := tview.NewTreeNode(databaseName).
 			SetColor(blueColor)
-		target.AddChild(nodeDB)
+		target.AddChild(databaseNode)
 
-		collections, _ := app.database.Client.ListCollections(db)
+		collections, _ := app.database.Client.ListCollections(databaseName)
 		collectionNode := tview.NewTreeNode("Collections").Collapse().
 			SetColor(blueColor)
-		nodeDB.AddChild(collectionNode)
+		databaseNode.AddChild(collectionNode)
 		for _, collection := range collections {
-			collectionTreeNode := tview.NewTreeNode(collection).
+			collectionNameTreeNode := tview.NewTreeNode(collection).
 				SetColor(lightWhite)
-			collectionNode.AddChild(collectionTreeNode)
+			collectionNode.AddChild(collectionNameTreeNode)
 		}
 
-		views, _ := app.database.Client.ListViews(db)
+		views, _ := app.database.Client.ListViews(databaseName)
 		viewsNode := tview.NewTreeNode("Views").Collapse().
 			SetColor(blueColor)
-		nodeDB.AddChild(viewsNode)
+		databaseNode.AddChild(viewsNode)
 		for _, view := range views {
 			viewsTree := tview.NewTreeNode(view).
 				SetColor(lightWhite)
 			viewsNode.AddChild(viewsTree)
 		}
 
-		users, _ := app.database.Client.ListUsers(db)
+		users, _ := app.database.Client.ListUsers(databaseName)
 		usersNode := tview.NewTreeNode("Users").Collapse().
 			SetColor(blueColor)
-		nodeDB.AddChild(usersNode)
+		databaseNode.AddChild(usersNode)
 		for _, user := range users {
 			userTreeNode := tview.NewTreeNode(user).
 				SetColor(lightWhite)
@@ -128,20 +130,16 @@ func (app *App) populateFinder(target *tview.TreeNode) {
 	}
 }
 
-func selectNode(node *tview.TreeNode) {
-	node.SetExpanded(!node.IsExpanded())
-}
-
 func (app *App) treeInputHandler(event *tcell.EventKey) *tcell.EventKey {
 	reference := make(map[bool]string)
 
 	if event.Rune() == 83 || event.Rune() == 115 { // S or s
-		if app.treeView.GetCurrentNode().GetReference() == nil {
-			reference[true] = app.treeView.GetCurrentNode().GetText()
-			app.treeView.GetCurrentNode().SetReference(reference)
+		if app.tree.GetCurrentNode().GetReference() == nil {
+			reference[true] = app.tree.GetCurrentNode().GetText()
+			app.tree.GetCurrentNode().SetReference(reference)
 		} else {
-			reference[false] = app.treeView.GetCurrentNode().GetText()
-			app.treeView.GetCurrentNode().SetReference(reference)
+			reference[false] = app.tree.GetCurrentNode().GetText()
+			app.tree.GetCurrentNode().SetReference(reference)
 		}
 		return nil
 	}
@@ -150,16 +148,16 @@ func (app *App) treeInputHandler(event *tcell.EventKey) *tcell.EventKey {
 }
 
 func (app *App) appInputHandler(event *tcell.EventKey) *tcell.EventKey {
-	if !app.inputArea.HasFocus() {
+	if !app.input.HasFocus() {
 		switch event.Rune() {
 		case 81, 113: // Q or q or ctrl-c
 			app.app.Stop()
 			return nil
 		case 73, 105, 58: //I or i or :
-			app.app.SetFocus(app.inputArea)
+			app.app.SetFocus(app.input)
 			return nil
 		case 68, 100: // D or d
-			app.app.SetFocus(app.treeView)
+			app.app.SetFocus(app.tree)
 			return nil
 		case 80, 112: // P or p
 			app.app.SetFocus(app.preview)
@@ -179,15 +177,15 @@ func (app *App) inputAreaInputHandler(event *tcell.EventKey) *tcell.EventKey {
 		app.preview.Clear()
 
 		var db string
-		refInterface := app.treeView.GetCurrentNode().GetReference()
-		reference := refInterface.(map[bool]string)
+		referenceInterface := app.tree.GetCurrentNode().GetReference()
+		reference := referenceInterface.(map[bool]string)
 		if reference == nil {
 			db = "admin"
 		} else {
 			db = reference[true]
 		}
 
-		command := app.inputArea.GetText()
+		command := app.input.GetText()
 		output := app.database.Client.RunCommand(db, command)
 		_, _ = fmt.Fprint(app.preview, output)
 
