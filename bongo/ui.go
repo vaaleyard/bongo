@@ -1,10 +1,8 @@
 package bongo
 
 import (
-	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"golang.design/x/clipboard"
 )
 
 const (
@@ -19,6 +17,9 @@ func Ui(app *App) {
 		SetColor(tcell.ColorGreen)
 
 	app.tree.
+		SetSelectedFunc(func(node *tview.TreeNode) {
+			node.SetExpanded(!node.IsExpanded())
+		}).
 		SetRoot(treeNode).
 		SetCurrentNode(treeNode).SetGraphics(false).
 		SetTopLevel(1).
@@ -29,13 +30,13 @@ func Ui(app *App) {
 		SetFocusFunc(func() {
 			app.tree.SetBorderColor(blueColor).
 				SetTitleColor(blueColor).
-				SetTitle("Finder*")
+				SetTitle("Databases*")
 		}).
 		SetBlurFunc(func() {
 			app.tree.SetBorderColor(whiteColor).
 				SetTitleColor(whiteColor).
-				SetTitle("Finder")
-		})
+				SetTitle("Databases")
+		}).SetInputCapture(app.treeInputHandler)
 
 	app.input.
 		SetPlaceholder("Press q to exit, i to insert.").
@@ -43,7 +44,6 @@ func Ui(app *App) {
 		SetBorderPadding(0, 0, 1, 0).
 		SetBorder(true).
 		SetTitle("Input").SetTitleAlign(tview.AlignLeft).
-		SetInputCapture(app.inputAreaInputHandler).
 		SetFocusFunc(func() {
 			app.input.SetBorderColor(blueColor).
 				SetTitleColor(blueColor).
@@ -53,9 +53,10 @@ func Ui(app *App) {
 			app.input.SetBorderColor(whiteColor).
 				SetTitleColor(whiteColor).
 				SetTitle("Input")
-		})
+		}).SetInputCapture(app.inputAreaInputHandler)
 
-	app.preview.SetBorder(true).
+	app.preview.
+		SetBorder(true).
 		SetTitle("Preview").SetTitleAlign(tview.AlignCenter).
 		SetFocusFunc(func() {
 			app.preview.SetBorderColor(blueColor).
@@ -66,7 +67,7 @@ func Ui(app *App) {
 			app.preview.SetBorderColor(whiteColor).
 				SetTitleColor(whiteColor).
 				SetTitle("Preview")
-		})
+		}).SetInputCapture(app.previewInputHandler)
 
 	layout := tview.NewFlex()
 	layout.
@@ -78,12 +79,8 @@ func Ui(app *App) {
 			0, 14, false).
 		SetBorderPadding(1, 1, 1, 1)
 
-	app.populateFinder(treeNode)
-	app.tree.SetSelectedFunc(func(node *tview.TreeNode) {
-		node.SetExpanded(!node.IsExpanded())
-	}).SetInputCapture(app.treeInputHandler)
+	app.populateTree(treeNode)
 
-	app.preview.SetInputCapture(app.previewInputHandler)
 	app.app.SetInputCapture(app.appInputHandler)
 
 	app.pages.AddPage("layout", layout, true, true)
@@ -93,7 +90,7 @@ func Ui(app *App) {
 	}
 }
 
-func (app *App) populateFinder(target *tview.TreeNode) {
+func (app *App) populateTree(target *tview.TreeNode) {
 	names, _ := app.database.Client.ListDatabaseNames()
 	for _, databaseName := range names {
 		databaseNode := tview.NewTreeNode(databaseName).
@@ -130,85 +127,4 @@ func (app *App) populateFinder(target *tview.TreeNode) {
 			usersNode.AddChild(userTreeNode)
 		}
 	}
-}
-
-func (app *App) previewInputHandler(event *tcell.EventKey) *tcell.EventKey {
-	if event.Rune() == 89 || event.Rune() == 121 { // Y or y
-		content := app.preview.GetText(true)
-
-		err := clipboard.Init()
-		if err != nil {
-			panic(err)
-		}
-
-		clipboard.Write(clipboard.FmtText, []byte(content))
-		return nil
-	}
-
-	return event
-}
-
-func (app *App) treeInputHandler(event *tcell.EventKey) *tcell.EventKey {
-	reference := make(map[bool]string)
-
-	if event.Rune() == 83 || event.Rune() == 115 { // S or s
-		if app.tree.GetCurrentNode().GetReference() == nil {
-			reference[true] = app.tree.GetCurrentNode().GetText()
-			app.tree.GetCurrentNode().SetReference(reference)
-		} else {
-			reference[false] = app.tree.GetCurrentNode().GetText()
-			app.tree.GetCurrentNode().SetReference(reference)
-		}
-		return nil
-	}
-
-	return event
-}
-
-func (app *App) appInputHandler(event *tcell.EventKey) *tcell.EventKey {
-	if !app.input.HasFocus() {
-		switch event.Rune() {
-		case 81, 113: // Q or q or ctrl-c
-			app.app.Stop()
-			return nil
-		case 73, 105, 58: //I or i or :
-			app.app.SetFocus(app.input)
-			return nil
-		case 68, 100: // D or d
-			app.app.SetFocus(app.tree)
-			return nil
-		case 80, 112: // P or p
-			app.app.SetFocus(app.preview)
-			return nil
-		}
-	}
-	if event.Key() == tcell.KeyESC {
-		app.app.SetFocus(app.pages)
-		return nil
-	}
-
-	return event
-}
-
-func (app *App) inputAreaInputHandler(event *tcell.EventKey) *tcell.EventKey {
-	if event.Key() == tcell.KeyEnter {
-		app.preview.Clear()
-
-		var db string
-		referenceInterface := app.tree.GetCurrentNode().GetReference()
-		reference := referenceInterface.(map[bool]string)
-		if reference == nil {
-			db = "admin"
-		} else {
-			db = reference[true]
-		}
-
-		command := app.input.GetText()
-		output := app.database.Client.RunCommand(db, command)
-		_, _ = fmt.Fprint(app.preview, output)
-
-		return nil
-	}
-
-	return event
 }
