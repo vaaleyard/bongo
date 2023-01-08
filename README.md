@@ -15,7 +15,7 @@ A mongo management TUI dashboard <br>
 
 ## Features
 - Navigate through database collections, views and users in a tree view
-- Run a database command and view it's output (and copy it to the clipboard)
+- Run a [database command](https://www.mongodb.com/docs/manual/reference/command/) and view it's output (you can also copy it to the clipboard)
 - Vim keybindings
 
 ## Installation
