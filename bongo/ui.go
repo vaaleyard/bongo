@@ -5,8 +5,16 @@ import (
 	"github.com/rivo/tview"
 )
 
+const (
+	blueColor  = tcell.ColorCornflowerBlue
+	whiteColor = tcell.ColorLightGrey
+	lightWhite = tcell.ColorLightGrey
+)
+
 func Ui(app *App) {
 	treeNode := tview.NewTreeNode(".")
+	treeNode.
+		SetColor(tcell.ColorGreen)
 
 	app.tree.
 		SetSelectedFunc(func(node *tview.TreeNode) {
@@ -15,13 +23,13 @@ func Ui(app *App) {
 		SetRoot(treeNode).
 		SetCurrentNode(treeNode).SetGraphics(false).
 		SetTopLevel(1).
-		SetPrefixes([]string{"> ", "> ", "- "}).
+		SetPrefixes([]string{"> "}).
 		SetBorder(true).
-		SetTitle("Databases").SetTitleAlign(tview.AlignLeft).
+		SetTitle("Finder").SetTitleAlign(tview.AlignLeft).
 		SetBorderPadding(0, 0, 1, 0).
 		SetFocusFunc(func() {
-			app.tree.SetBorderColor(focusColor.TrueColor()).
-				SetTitleColor(focusColor).
+			app.tree.SetBorderColor(blueColor).
+				SetTitleColor(blueColor).
 				SetTitle("Databases*")
 		}).
 		SetBlurFunc(func() {
@@ -32,18 +40,17 @@ func Ui(app *App) {
 
 	app.input.
 		SetPlaceholder("Press q to exit, i to insert.").
+		SetPlaceholderStyle(tcell.StyleDefault.Attributes(tcell.AttrDim)).
 		SetBorderPadding(0, 0, 1, 0).
 		SetBorder(true).
 		SetTitle("Input").SetTitleAlign(tview.AlignLeft).
 		SetFocusFunc(func() {
-			app.input.SetBorderColor(focusColor).
-				SetBackgroundColor(tcell.ColorBlack.TrueColor()).
-				SetTitleColor(focusColor).
+			app.input.SetBorderColor(blueColor).
+				SetTitleColor(blueColor).
 				SetTitle("Input*")
 		}).
 		SetBlurFunc(func() {
 			app.input.SetBorderColor(whiteColor).
-				SetBackgroundColor(tcell.ColorBlack.TrueColor()).
 				SetTitleColor(whiteColor).
 				SetTitle("Input")
 		}).SetInputCapture(app.inputAreaInputHandler)
@@ -52,8 +59,8 @@ func Ui(app *App) {
 		SetBorder(true).
 		SetTitle("Preview").SetTitleAlign(tview.AlignCenter).
 		SetFocusFunc(func() {
-			app.preview.SetBorderColor(focusColor).
-				SetTitleColor(focusColor).
+			app.preview.SetBorderColor(blueColor).
+				SetTitleColor(blueColor).
 				SetTitle("Preview*")
 		}).
 		SetBlurFunc(func() {
@@ -70,14 +77,12 @@ func Ui(app *App) {
 				AddItem(app.tree, 0, 1, false).
 				AddItem(app.preview, 0, 5, false),
 			0, 14, false).
-		SetBorderPadding(1, 1, 1, 1).SetBackgroundColor(tcell.ColorBlack.TrueColor()).
-		SetBorderColor(tcell.ColorBlack.TrueColor())
-
+		SetBorderPadding(1, 1, 1, 1)
 
 	app.populateTree(treeNode)
-    app.colorize()
 
 	app.app.SetInputCapture(app.appInputHandler)
+
 	app.pages.AddPage("layout", layout, true, true)
 	if err := app.app.SetRoot(app.pages, true).
 		SetFocus(app.pages).Run(); err != nil {
@@ -98,7 +103,7 @@ func (app *App) populateTree(target *tview.TreeNode) {
 		databaseNode.AddChild(collectionNode)
 		for _, collection := range collections {
 			collectionNameTreeNode := tview.NewTreeNode(collection).
-				SetColor(tcell.ColorSteelBlue.TrueColor())
+				SetColor(lightWhite)
 			collectionNode.AddChild(collectionNameTreeNode)
 		}
 
@@ -108,7 +113,7 @@ func (app *App) populateTree(target *tview.TreeNode) {
 		databaseNode.AddChild(viewsNode)
 		for _, view := range views {
 			viewsTree := tview.NewTreeNode(view).
-				SetColor(tcell.ColorSteelBlue.TrueColor())
+				SetColor(lightWhite)
 			viewsNode.AddChild(viewsTree)
 		}
 
@@ -118,7 +123,7 @@ func (app *App) populateTree(target *tview.TreeNode) {
 		databaseNode.AddChild(usersNode)
 		for _, user := range users {
 			userTreeNode := tview.NewTreeNode(user).
-				SetColor(tcell.ColorSteelBlue.TrueColor())
+				SetColor(lightWhite)
 			usersNode.AddChild(userTreeNode)
 		}
 	}
